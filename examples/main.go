@@ -4,6 +4,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/eguevara/go-notify"
 	"github.com/nlopes/slack"
 )
@@ -44,4 +47,21 @@ func main() {
 	if err := svc.Notify(slackInputParams); err != nil {
 		log.Fatalf("could not call notify on slack service: %v", err)
 	}
+
+	/* SES Implementation of Notifier */
+
+	sesClient := ses.New(session.New(&aws.Config{Region: aws.String("us-west-2")}))
+	sesSVC := notify.NewSESService(sesClient)
+
+	sesInputParams := &notify.SESNotifyInput{
+		From:    "foo@example.com",
+		Subject: "subject",
+		To:      []string{"baz@example.com"},
+		Message: msg.String(),
+	}
+
+	if err := sesSVC.Notify(sesInputParams); err != nil {
+		log.Fatalf("could not call notify on ses service: %v", err)
+	}
+
 }
